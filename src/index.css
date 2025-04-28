@@ -1,0 +1,71 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 262 83% 59%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 6.1% 24.7%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 16.9%;
+    --input: 240 3.7% 16.9%;
+    --ring: 262 83% 59%;
+    --radius: 0.75rem;
+
+    --shadow-color: 262 83% 59% / 0.25;
+  }
+
+  html {
+    color-scheme: dark;
+    background: radial-gradient(ellipse 120% 80% at 60% 40%, #1A1443 0%, #161928 100%);
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    background: radial-gradient(ellipse 80% 50% at 50% 30%, #242541 0%, #0b0f1a 100%);
+  }
+}
+
+/* Fancy colored shadow utility */
+.card-glow {
+  box-shadow: 0 6px 32px 0 hsl(var(--shadow-color)), 0 1.5px 16px hsl(var(--primary));
+}
+
+/* Animated float (for logos, avatars, cards) */
+@keyframes float {
+  0% { transform: translateY(0px);}
+  50% { transform: translateY(-12px);}
+  100% { transform: translateY(0px);}
+}
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Card hover effect */
+.card-hover {
+  transition: box-shadow 0.3s, transform 0.3s;
+}
+.card-hover:hover {
+  box-shadow: 0 0px 30px 0 hsl(var(--primary)), 0 8px 50px 0 hsl(var(--primary) / 0.20);
+  transform: translateY(-4px) scale(1.03);
+}
+
+/* Navbar blur background */
+.navbar-blur {
+  @apply bg-background/90 backdrop-blur-md border-b border-border;
+}
+
