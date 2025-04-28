@@ -18,27 +18,31 @@ const About = () => {
         </div>
       </section>
       
-      {/* Our Team */}
+      {/* About the Developer */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-12 text-center">Our Team</h2>
+          <h2 className="text-3xl font-bold mb-12 text-center">About the Developer</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-6xl mx-auto">
-            {/* Team Member 1 */}
-            <div className="text-center hover:scale-105 transition-transform duration-300">
-              <div className="w-40 h-40 rounded-full mx-auto mb-4 overflow-hidden bg-gray-200 shadow-xl">
-                <img 
-                  src="https://avatars.githubusercontent.com/u/131295002?v=4" 
-                  alt="CEO" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
+          <div className="flex flex-col md:flex-row items-center max-w-3xl mx-auto">
+            {/* Photo */}
+            <div className="w-40 h-40 rounded-full overflow-hidden bg-gray-200 shadow-xl mb-6 md:mb-0 md:mr-8">
+              <img 
+                src="https://avatars.githubusercontent.com/u/131295002?v=4" 
+                alt="Developer" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+            {/* Description */}
+            <div>
               <h3 className="text-xl font-bold">BIDYADHAR SAHU</h3>
               <p className="text-blue-600 mb-2">Cloud Solution Developer</p>
               <p className="text-gray-600">
                 Expert in algorithms and cloud infrastructure, with a strong background in designing scalable platforms and working with blockchain technologies.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
       
       {/* CTA Section */}
       <section className="py-16 bg-violet-600 text-white">
