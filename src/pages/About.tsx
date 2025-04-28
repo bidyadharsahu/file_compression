@@ -39,57 +39,6 @@ const About = () => {
                 Expert in algorithms and cloud infrastructure, with a strong background in designing scalable platforms and working with blockchain technologies.
               </p>
             </div>
-            
-            {/* Team Member 2 */}
-            <div className="text-center hover:scale-105 transition-transform duration-300">
-              <div className="w-40 h-40 rounded-full mx-auto mb-4 overflow-hidden bg-gray-200 shadow-xl">
-                <img 
-                  src="https://avatars.githubusercontent.com/u/148786427?s=400&u=794e7f3fe9c184c5fbb45f64d548f7d55175a5ea&v=4" 
-                  alt="CTO" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <h3 className="text-xl font-bold">SAMAR SEN BEHERA</h3>
-              <p className="text-blue-600 mb-2">UI/UX Designer</p>
-              <p className="text-gray-600">
-                Experienced DevOps specialist focused on streamlining development workflows and infrastructure automation.
-              </p>
-            </div>
-            
-            {/* Team Member 3 */}
-            <div className="text-center hover:scale-105 transition-transform duration-300">
-              <div className="w-40 h-40 rounded-full mx-auto mb-4 overflow-hidden bg-gray-200 shadow-xl">
-                <img 
-                  src="https://avatars.githubusercontent.com/u/183403536?v=4" 
-                  alt="Lead Developer" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <h3 className="text-xl font-bold">SOUMIK ROUTRAY</h3>
-              <p className="text-blue-600 mb-2">Frontend Devloper</p>
-              <p className="text-gray-600">
-                Skilled frontend developer focused on creating seamless and interactive user interfaces.
-              </p>
-            </div>
-
-            {/* Team Member 4 */}
-            <div className="text-center hover:scale-105 transition-transform duration-300">
-              <div className="w-40 h-40 rounded-full mx-auto mb-4 overflow-hidden bg-gray-200 shadow-xl">
-                <img 
-                  src="https://avatars.githubusercontent.com/u/208837719?v=4" 
-                  alt="Product Manager" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <h3 className="text-xl font-bold">ADITYA PRASAD SAHU</h3>
-              <p className="text-blue-600 mb-2">Cybersecurity specialist</p>
-              <p className="text-gray-600">
-                Experienced in cybersecurity, focused on protecting digital assets through advanced security practices.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
       
       {/* CTA Section */}
       <section className="py-16 bg-violet-600 text-white">
