@@ -33,17 +33,30 @@ const About = () => {
               />
             </div>
             {/* Description */}
-            <div>
+            <div className="text-center md:text-left">
               <h3 className="text-xl font-bold">BIDYADHAR SAHU</h3>
               <p className="text-blue-600 mb-2">Cloud Solution Developer</p>
-              <p className="text-gray-600">
+              <p className="text-gray-600 mb-2">
                 Expert in algorithms and cloud infrastructure, with a strong background in designing scalable platforms and working with blockchain technologies.
+              </p>
+              <p className="text-gray-600">
+                Based in India, passionate about solving real-world problems with technology, and an avid contributor to open-source projects.
               </p>
             </div>
           </div>
         </div>
       </section>
       
+      {/* Vision Section */}
+      <section className="py-16 bg-gray-100">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-6">Our Vision</h2>
+          <p className="text-xl mb-8 max-w-2xl mx-auto text-gray-700">
+            To empower individuals and businesses with cutting-edge file compression solutions that are fast, secure, and reliable.
+          </p>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-16 bg-violet-600 text-white">
         <div className="container mx-auto px-4 text-center">
