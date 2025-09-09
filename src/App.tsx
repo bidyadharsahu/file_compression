@@ -13,7 +13,6 @@ import Features from "./pages/Features";
 import About from "./pages/About";
 import Account from "./pages/Account";
 import AuthProvider from "./contexts/AuthContext";
-import ProtectedRoute from "./routes/ProtectedRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,12 +34,10 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/account" element={<Account />} />
-            </Route>
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/features" element={<Features />} />
             <Route path="/about" element={<About />} />
+            <Route path="/account" element={<Account />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
