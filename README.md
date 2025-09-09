@@ -1,4 +1,4 @@
-                                                      🧙‍♂️ File Compression Project
+                                                 🧙‍♂️ File Compression Project
 
 Welcome, fellow code wizard! ✨  
 Ever stared at a monstrous file and thought, “Yikes, how do I tame this beast?”  
