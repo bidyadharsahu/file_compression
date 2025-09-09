@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AuthForm from "@/components/AuthForm";
@@ -10,19 +9,17 @@ import { useAuth } from "@/contexts/AuthContext";
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signInWithGoogle } = useAuth();
 
-  // Handle login using our AuthContext
-  const handleLogin = async (values: Record<string, string>) => {
+  const handleGoogleSignIn = async () => {
     setIsLoading(true);
     
     try {
-      // Call our login function from context
-      await signIn(values.email, values.password);
-      console.log("Logged in successfully");
+      await signInWithGoogle();
+      console.log("Signed in successfully with Google");
       navigate("/dashboard");
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("Google sign in failed:", error);
       // Error is already handled in AuthContext with toast
     } finally {
       setIsLoading(false);
@@ -43,8 +40,7 @@ const Login = () => {
           </div>
           
           <AuthForm 
-            type="login"
-            onSubmit={handleLogin}
+            onGoogleSignIn={handleGoogleSignIn}
             isLoading={isLoading}
           />
         </div>

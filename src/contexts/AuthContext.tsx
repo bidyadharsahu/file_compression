@@ -1,25 +1,21 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { User } from 'firebase/auth';
+import { signInWithGoogle, signOut as firebaseSignOut, onAuthStateChange } from '@/integrations/firebase/auth';
 import { toast } from 'sonner';
 
 type AuthContextType = {
   user: User | null;
-  session: Session | null;
   isLoggedIn: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, metadata?: { name?: string }) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   loading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  session: null,
   isLoggedIn: false,
-  signIn: async () => {},
-  signUp: async () => {},
+  signInWithGoogle: async () => {},
   signOut: async () => {},
   loading: true
 });
@@ -28,82 +24,33 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed:", event);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
-
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session ? "Session exists" : "No session");
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Set up auth state listener
+    const unsubscribe = onAuthStateChange((user) => {
+      console.log("Auth state changed:", user ? "User signed in" : "User signed out");
+      setUser(user);
       setLoading(false);
     });
 
     return () => {
-      subscription.unsubscribe();
+      unsubscribe();
     };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const handleSignInWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast.error(`Login failed: ${error.message}`);
-        throw error;
-      }
-
-      toast.success("Logged in successfully");
+      await signInWithGoogle();
     } catch (error) {
-      console.error('Error signing in:', error);
+      console.error('Error signing in with Google:', error);
       throw error;
     }
   };
 
-  const signUp = async (email: string, password: string, metadata?: { name?: string }) => {
+  const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: metadata
-        }
-      });
-
-      if (error) {
-        toast.error(`Registration failed: ${error.message}`);
-        throw error;
-      }
-
-      toast.success("Account created successfully");
-    } catch (error) {
-      console.error('Error signing up:', error);
-      throw error;
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        toast.error(`Logout failed: ${error.message}`);
-        throw error;
-      }
-      toast.success("Logged out successfully");
+      await firebaseSignOut();
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
@@ -114,11 +61,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         user,
-        session,
         isLoggedIn: !!user,
-        signIn,
-        signUp,
-        signOut,
+        signInWithGoogle: handleSignInWithGoogle,
+        signOut: handleSignOut,
         loading
       }}
     >

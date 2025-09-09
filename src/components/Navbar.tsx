@@ -10,7 +10,6 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import Logo from "./Logo";
 
 interface NavbarProps {
@@ -18,26 +17,12 @@ interface NavbarProps {
 }
 
 const Navbar = ({ isLoggedIn: propIsLoggedIn }: NavbarProps) => {
-  const { isLoggedIn, signOut } = useAuth();
+  const { isLoggedIn, signOut, user } = useAuth();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
 
   const userIsLoggedIn = propIsLoggedIn !== undefined ? propIsLoggedIn : isLoggedIn;
-
-  // Get the current user ID
-  useState(() => {
-    const getCurrentUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) {
-        setUserId(data.user.id);
-      }
-    };
-    
-    if (userIsLoggedIn) {
-      getCurrentUser();
-    }
-  });
+  const userId = user?.uid;
 
   const handleLogout = () => {
     signOut();

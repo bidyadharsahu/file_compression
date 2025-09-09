@@ -9,7 +9,8 @@ import {
   simulateCompression,
   getFileType
 } from "@/utils/fileUtils";
-import { useUserFiles, useAddUserFile, uploadFileToSupabase, useDeleteUserFile, downloadFile } from "@/hooks/useUserFiles";
+import { useUserFiles, useAddUserFile, uploadFileToStorage, useDeleteUserFile, downloadFile } from "@/hooks/useUserFiles";
+import { Timestamp } from "firebase/firestore";
 
 import DashboardStats from "./dashboard/DashboardStats";
 import DashboardUploader from "./dashboard/DashboardUploader";
@@ -22,7 +23,7 @@ const Dashboard = () => {
   const [isCompressing, setIsCompressing] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  const userId = user?.id || null;
+  const userId = user?.uid || null;
   const navigate = useNavigate();
 
   const fileQuery = useUserFiles(userId);
@@ -68,7 +69,7 @@ const Dashboard = () => {
 
       const { compressedSize } = await simulateCompression(selectedFile);
 
-      const storagePath = await uploadFileToSupabase(userId, selectedFile);
+      const { path: storagePath, downloadUrl } = await uploadFileToStorage(userId, selectedFile);
 
       await addUserFile.mutateAsync({
         user_id: userId,
@@ -77,6 +78,7 @@ const Dashboard = () => {
         compressed_size: compressedSize,
         file_type: getFileType(selectedFile),
         storage_path: storagePath,
+        download_url: downloadUrl,
       });
 
       setTimeout(() => {
@@ -104,8 +106,8 @@ const Dashboard = () => {
   const handleDownloadFile = async (fileId: string) => {
     try {
       const fileMeta = files.find(f => f.id === fileId);
-      if (fileMeta && fileMeta.storage_path) {
-        const blob = await downloadFile(fileMeta.storage_path);
+      if (fileMeta && fileMeta.download_url) {
+        const blob = await downloadFile(fileMeta.download_url);
         if (blob) {
           const url = window.URL.createObjectURL(blob);
           const a = document.createElement("a");
@@ -133,7 +135,7 @@ const Dashboard = () => {
   const handleDeleteFile = async (fileId: string) => {
     try {
       const fileMeta = files.find(f => f.id === fileId);
-      if (fileMeta) {
+      if (fileMeta && fileMeta.id) {
         await deleteUserFile.mutateAsync({ id: fileMeta.id, storage_path: fileMeta.storage_path });
         toast({
           title: "Deleted",
@@ -182,11 +184,11 @@ const Dashboard = () => {
 
           <DashboardFileList
             files={files.map(f => ({
-              id: f.id,
+              id: f.id || '',
               name: f.name,
               originalSize: f.original_size,
               compressedSize: f.compressed_size,
-              createdAt: new Date(f.created_at),
+              createdAt: f.created_at?.toDate ? f.created_at.toDate() : new Date(),
               type: f.file_type,
             }))}
             onDownload={handleDownloadFile}
