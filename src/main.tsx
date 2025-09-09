@@ -5,7 +5,5 @@ import './index.css'
 import { AuthProvider } from './contexts/AuthContext.tsx'
 
 createRoot(document.getElementById("root")!).render(
-  <AuthProvider>
-    <App />
-  </AuthProvider>
+  <App />
 );
