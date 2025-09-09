@@ -1,14 +1,14 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   getUserFiles,
   addUserFile,
-  uploadFileToFirebase,
+  processFileForStorage,
   deleteUserFile,
-  downloadFileFromFirebase,
-  UserFile
+  downloadFileFromFirestore,
+  UserFile as FirebaseUserFile
 } from "@/integrations/firebase/firestore";
+import { UserFile } from "@/integrations/firebase/firestore";
 
 export function useUserFiles(userId: string | null) {
   return useQuery({
@@ -25,7 +25,7 @@ export function useAddUserFile() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (fileMeta: Omit<UserFile, "id" | "created_at" | "updated_at">) => {
+    mutationFn: async (fileMeta: Omit<FirebaseUserFile, "id" | "created_at" | "updated_at">) => {
       return await addUserFile(fileMeta);
     },
     onSuccess: (data, variables) => {
@@ -40,20 +40,25 @@ export function useAddUserFile() {
   });
 }
 
-export async function uploadFileToStorage(userId: string, file: File): Promise<{ path: string; downloadUrl: string }> {
-  return await uploadFileToFirebase(userId, file);
+export async function processAndStoreFile(userId: string, file: File): Promise<{
+  compressedData: string;
+  originalSize: number;
+  compressedSize: number;
+  compressionRatio: number;
+}> {
+  return await processFileForStorage(file);
 }
 
-export async function downloadFile(downloadUrl: string): Promise<Blob> {
-  return await downloadFileFromFirebase(downloadUrl);
+export async function downloadFile(fileData: string, fileName: string, fileType: string): Promise<void> {
+  return await downloadFileFromFirestore(fileData, fileName, fileType);
 }
 
 export function useDeleteUserFile() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, storage_path }: { id: string, storage_path: string }) => {
-      await deleteUserFile(id, storage_path);
+    mutationFn: async ({ id }: { id: string }) => {
+      await deleteUserFile(id);
       return id;
     },
     onSuccess: (id) => {
@@ -67,4 +72,4 @@ export function useDeleteUserFile() {
   });
 }
 
-export { UserFile };
+export type { UserFile };

@@ -1,5 +1,6 @@
 
 import { Progress } from "@/components/ui/progress";
+import { Loader2 } from "lucide-react";
 
 interface CompressProgressProps {
   progress: number;
@@ -9,19 +10,35 @@ interface CompressProgressProps {
 
 const CompressProgress = ({ progress, fileName, isCompressing }: CompressProgressProps) => {
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 my-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-blue-600 truncate max-w-[80%]">
-          {isCompressing ? "Compressing" : "Processing"}: {fileName}
-        </span>
-        <span className="text-sm font-medium text-blue-600">{progress}%</span>
+    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+      <div className="text-center space-y-4">
+        <div className="flex justify-center">
+          <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
+        </div>
+        
+        <div>
+          <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-2">
+            {isCompressing ? "Compressing File" : "Processing"}
+          </h3>
+          <p className="text-sm text-blue-700 dark:text-blue-400 font-medium truncate max-w-md mx-auto">
+            {fileName}
+          </p>
+        </div>
+        
+        <div className="space-y-2">
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-blue-600 dark:text-blue-400">Progress</span>
+            <span className="text-blue-600 dark:text-blue-400 font-semibold">{progress}%</span>
+          </div>
+          <Progress value={progress} className="h-3 bg-blue-100 dark:bg-blue-900" />
+        </div>
+        
+        <p className="text-xs text-blue-600 dark:text-blue-400">
+          {isCompressing 
+            ? "Compressing your file for secure storage..." 
+            : "Processing your file..."}
+        </p>
       </div>
-      <Progress value={progress} className="h-2" />
-      <p className="text-xs text-gray-500 mt-2">
-        {isCompressing 
-          ? "Compressing your file for secure storage..." 
-          : "Processing your file..."}
-      </p>
     </div>
   );
 };

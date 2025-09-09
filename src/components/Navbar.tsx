@@ -22,7 +22,7 @@ const Navbar = ({ isLoggedIn: propIsLoggedIn }: NavbarProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const userIsLoggedIn = propIsLoggedIn !== undefined ? propIsLoggedIn : isLoggedIn;
-  const userId = user?.uid;
+  const userDisplayName = user?.email || user?.displayName || user?.uid?.substring(0, 8) + '...' || 'Account';
 
   const handleLogout = () => {
     signOut();
@@ -54,7 +54,7 @@ const Navbar = ({ isLoggedIn: propIsLoggedIn }: NavbarProps) => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="flex items-center gap-2 font-medium border-primary/40 text-primary hover:bg-primary/10 hover:text-white transition-all">
                     <User size={16} />
-                    {userId ? userId.substring(0, 8) + '...' : 'Account'}
+                    {userDisplayName}
                     <ChevronDown size={16} />
                   </Button>
                 </DropdownMenuTrigger>
@@ -128,9 +128,9 @@ const Navbar = ({ isLoggedIn: propIsLoggedIn }: NavbarProps) => {
                 >
                   Dashboard
                 </Link>
-                {userId && (
+                {user && (
                   <div className="text-sm text-foreground/70 py-2 border-t border-primary/10">
-                    User ID: {userId.substring(0, 8)}...
+                    {user.email || `User ID: ${user.uid?.substring(0, 8)}...`}
                   </div>
                 )}
                 <Button variant="outline" className="font-medium border-primary/40 text-primary hover:bg-primary/10 hover:text-white" onClick={handleLogout}>

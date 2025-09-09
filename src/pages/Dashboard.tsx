@@ -1,39 +1,31 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  simulateCompression,
-  getFileType
-} from "@/utils/fileUtils";
-import { useUserFiles, useAddUserFile, uploadFileToStorage, useDeleteUserFile, downloadFile } from "@/hooks/useUserFiles";
-import { Timestamp } from "firebase/firestore";
+import { useLocalFiles } from "@/hooks/useLocalFiles";
+import { formatFileSize } from "@/utils/localFileCompression";
 
 import DashboardStats from "./dashboard/DashboardStats";
-import DashboardUploader from "./dashboard/DashboardUploader";
+import SimpleUploader from "@/components/SimpleUploader";
 import DashboardFileList from "./dashboard/DashboardFileList";
 
 const Dashboard = () => {
   const { user, isLoggedIn } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  const userId = user?.uid || null;
-  const navigate = useNavigate();
+  const { files, addFile, deleteFile, downloadFile } = useLocalFiles();
 
-  const fileQuery = useUserFiles(userId);
-  const addUserFile = useAddUserFile();
-  const deleteUserFile = useDeleteUserFile();
-
-  const files = fileQuery.data || [];
+  // Calculate stats from local files
   const totalFiles = files.length;
-  const totalOriginalSize = files.reduce((sum, file) => sum + file.original_size, 0);
-  const totalCompressedSize = files.reduce((sum, file) => sum + file.compressed_size, 0);
+  const totalOriginalSize = files.reduce((sum, file) => sum + file.originalSize, 0);
+  const totalCompressedSize = files.reduce((sum, file) => sum + file.compressedSize, 0);
   const savedSpace = totalOriginalSize - totalCompressedSize;
   const percentSaved = totalOriginalSize === 0
     ? 0
@@ -44,10 +36,10 @@ const Dashboard = () => {
   };
 
   const handleCompressFile = async () => {
-    if (!selectedFile || !userId) {
+    if (!selectedFile) {
       toast({
         title: "Error",
-        description: "No file selected or you're not logged in",
+        description: "No file selected",
         variant: "destructive"
       });
       return;
@@ -57,71 +49,53 @@ const Dashboard = () => {
     setProgress(0);
 
     try {
-      let timer: NodeJS.Timeout;
-      let current = 0;
-      timer = setInterval(() => {
-        current += 10;
-        setProgress(current);
-        if (current >= 100) {
-          clearInterval(timer);
-        }
-      }, 250);
+      // Simulate progress
+      const timer = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(timer);
+            return prev;
+          }
+          return prev + 10;
+        });
+      }, 200);
 
-      const { compressedSize } = await simulateCompression(selectedFile);
+      // Compress the file locally
+      const compressedFile = await addFile(selectedFile);
 
-      const { path: storagePath, downloadUrl } = await uploadFileToStorage(userId, selectedFile);
-
-      await addUserFile.mutateAsync({
-        user_id: userId,
-        name: selectedFile.name,
-        original_size: selectedFile.size,
-        compressed_size: compressedSize,
-        file_type: getFileType(selectedFile),
-        storage_path: storagePath,
-        download_url: downloadUrl,
-      });
+      clearInterval(timer);
+      setProgress(100);
 
       setTimeout(() => {
-        setProgress(100);
         setIsCompressing(false);
+        setProgress(0);
         setSelectedFile(null);
-
-        fileQuery.refetch();
 
         toast({
           title: "Success",
-          description: `File "${selectedFile.name}" compressed and uploaded successfully`,
+          description: `File "${compressedFile.name}" compressed successfully! Saved ${compressedFile.compressionRatio.toFixed(1)}% space`,
         });
-      }, 400);
-    } catch (e) {
+      }, 500);
+    } catch (error) {
       setIsCompressing(false);
+      setProgress(0);
       toast({
-        title: "Upload Error",
-        description: String((e as any)?.message || e),
+        title: "Compression Error",
+        description: String((error as any)?.message || error),
         variant: "destructive"
       });
     }
   };
 
-  const handleDownloadFile = async (fileId: string) => {
+  const handleDownloadFile = (fileId: string) => {
     try {
-      const fileMeta = files.find(f => f.id === fileId);
-      if (fileMeta && fileMeta.download_url) {
-        const blob = await downloadFile(fileMeta.download_url);
-        if (blob) {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = fileMeta.name;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-
-          toast({
-            title: "Downloaded",
-            description: `File "${fileMeta.name}" downloaded successfully`,
-          });
-        }
+      downloadFile(fileId);
+      const file = files.find(f => f.id === fileId);
+      if (file) {
+        toast({
+          title: "Downloaded",
+          description: `File "${file.name}" downloaded successfully`,
+        });
       }
     } catch (error) {
       toast({
@@ -132,14 +106,14 @@ const Dashboard = () => {
     }
   };
 
-  const handleDeleteFile = async (fileId: string) => {
+  const handleDeleteFile = (fileId: string) => {
     try {
-      const fileMeta = files.find(f => f.id === fileId);
-      if (fileMeta && fileMeta.id) {
-        await deleteUserFile.mutateAsync({ id: fileMeta.id, storage_path: fileMeta.storage_path });
+      const file = files.find(f => f.id === fileId);
+      deleteFile(fileId);
+      if (file) {
         toast({
           title: "Deleted",
-          description: `File "${fileMeta.name}" deleted successfully`,
+          description: `File "${file.name}" deleted successfully`,
         });
       }
     } catch (error) {
@@ -160,42 +134,69 @@ const Dashboard = () => {
   if (!isLoggedIn) return null;
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gray-950">
       <Navbar isLoggedIn={isLoggedIn} />
 
-      <main className="flex-1 py-10 bg-gray-50 dark:bg-zinc-900 transition-colors">
-        <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6">Your Dashboard</h1>
+      <main className="flex-1 py-8 bg-gray-950">
+        <div className="container mx-auto px-4 max-w-7xl">
+          {/* Header Section */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-white mb-2">Dashboard</h1>
+            <p className="text-gray-400 text-lg">Manage your compressed files</p>
+          </div>
 
-          <DashboardStats
-            totalFiles={totalFiles}
-            savedSpace={savedSpace}
-            percentSaved={percentSaved}
-            totalCompressedSize={totalCompressedSize}
-          />
+          {/* Stats Section */}
+          <div className="mb-8">
+            <DashboardStats
+              totalFiles={totalFiles}
+              savedSpace={savedSpace}
+              percentSaved={percentSaved}
+              totalCompressedSize={totalCompressedSize}
+            />
+          </div>
 
-          <DashboardUploader
-            selectedFile={selectedFile}
-            isCompressing={isCompressing}
-            progress={progress}
-            onFileSelect={handleFileSelect}
-            onCompressFile={handleCompressFile}
-          />
+          {/* Upload Section */}
+          <div className="mb-8 bg-gray-900 rounded-xl border border-gray-800 p-6">
+            <h2 className="text-xl font-semibold text-white mb-4">Upload & Compress</h2>
+            <SimpleUploader
+              selectedFile={selectedFile}
+              isCompressing={isCompressing}
+              progress={progress}
+              onFileSelect={handleFileSelect}
+              onCompress={handleCompressFile}
+              onCancel={() => {
+                setIsCompressing(false);
+                setProgress(0);
+              }}
+            />
+          </div>
 
-          <DashboardFileList
-            files={files.map(f => ({
-              id: f.id || '',
-              name: f.name,
-              originalSize: f.original_size,
-              compressedSize: f.compressed_size,
-              createdAt: f.created_at?.toDate ? f.created_at.toDate() : new Date(),
-              type: f.file_type,
-            }))}
-            onDownload={handleDownloadFile}
-            onDelete={handleDeleteFile}
-          />
+          {/* Files Section */}
+          <div className="bg-gray-900 rounded-xl border border-gray-800 p-6">
+            <h2 className="text-xl font-semibold text-white mb-4">Your Files</h2>
+            {files.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-gray-500 text-lg mb-2">No files uploaded yet</div>
+                <div className="text-gray-600 text-sm">Upload and compress your first file to get started</div>
+              </div>
+            ) : (
+              <DashboardFileList
+                files={files.map(f => ({
+                  id: f.id,
+                  name: f.name,
+                  originalSize: f.originalSize,
+                  compressedSize: f.compressedSize,
+                  createdAt: f.createdAt,
+                  type: f.fileType,
+                }))}
+                onDownload={handleDownloadFile}
+                onDelete={handleDeleteFile}
+              />
+            )}
+          </div>
         </div>
       </main>
+      
       <Footer />
     </div>
   );

@@ -73,7 +73,7 @@ const FileList = ({ files, onDownload, onDelete }: FileListProps) => {
             </thead>
             <tbody>
               {files.map((file) => (
-                <tr key={file.id} className="bg-white border-b hover:bg-gray-50">
+                <tr key={file.id} className="bg-white text-black border-b">
                   <td className="px-6 py-4 font-medium text-gray-900 truncate max-w-[200px]">
                     {file.name}
                   </td>
@@ -92,7 +92,7 @@ const FileList = ({ files, onDownload, onDelete }: FileListProps) => {
                         size="sm"
                         variant="outline"
                         onClick={() => onDownload(file.id)}
-                        className="p-1 h-8 w-8"
+                        className="p-1 text-white h-8 w-8"
                       >
                         <Download className="h-4 w-4" />
                       </Button>
@@ -100,7 +100,7 @@ const FileList = ({ files, onDownload, onDelete }: FileListProps) => {
                         size="sm"
                         variant="outline"
                         onClick={() => onDelete(file.id)}
-                        className="p-1 h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="p-1 h-8 w-8 text-red-600"
                       >
                         <Trash className="h-4 w-4" />
                       </Button>

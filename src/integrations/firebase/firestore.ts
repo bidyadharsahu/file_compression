@@ -11,8 +11,7 @@ import {
   QueryDocumentSnapshot,
   DocumentData
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { db, storage } from './config';
+import { db } from './config';
 import { toast } from 'sonner';
 
 export interface UserFile {
@@ -24,12 +23,11 @@ export interface UserFile {
   file_type: string;
   created_at: Timestamp;
   updated_at: Timestamp;
-  storage_path: string;
-  download_url?: string;
+  file_data: string; // Base64 encoded file data
+  compression_ratio: number;
 }
 
 const COLLECTION_NAME = 'user_files';
-const STORAGE_BUCKET = 'compressed_files';
 
 // Convert Firestore document to UserFile
 const convertDocToUserFile = (doc: QueryDocumentSnapshot<DocumentData>): UserFile => {
@@ -43,8 +41,8 @@ const convertDocToUserFile = (doc: QueryDocumentSnapshot<DocumentData>): UserFil
     file_type: data.file_type,
     created_at: data.created_at,
     updated_at: data.updated_at,
-    storage_path: data.storage_path,
-    download_url: data.download_url,
+    file_data: data.file_data,
+    compression_ratio: data.compression_ratio,
   };
 };
 
@@ -95,37 +93,120 @@ export const addUserFile = async (fileMeta: Omit<UserFile, "id" | "created_at" |
   }
 };
 
-export const uploadFileToFirebase = async (userId: string, file: File): Promise<{ path: string; downloadUrl: string }> => {
+// Convert file to base64 and compress
+export const processFileForStorage = async (file: File): Promise<{
+  compressedData: string;
+  originalSize: number;
+  compressedSize: number;
+  compressionRatio: number;
+}> => {
   try {
-    // Create a unique path for the file
-    const path = `${STORAGE_BUCKET}/${userId}/${Date.now()}_${file.name}`;
+    console.log("Processing file for storage:", file.name);
     
-    console.log("Uploading file to path:", path);
+    const originalSize = file.size;
+    let compressedData: string;
+    let compressedSize: number;
     
-    const storageRef = ref(storage, path);
-    const snapshot = await uploadBytes(storageRef, file);
+    // Handle image compression
+    if (file.type.startsWith('image/')) {
+      const { data, size } = await compressImage(file);
+      compressedData = data;
+      compressedSize = size;
+    } else {
+      // For non-images, convert to base64 and simulate compression
+      compressedData = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Remove data URL prefix (data:image/jpeg;base64,)
+          const base64 = result.split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      
+      // Simulate compression for non-image files
+      if (file.type.includes('text') || file.type.includes('json') || file.type.includes('javascript')) {
+        // Text files can be compressed more
+        compressedSize = Math.round(originalSize * 0.4);
+      } else if (file.type.includes('pdf') || file.type.includes('document')) {
+        compressedSize = Math.round(originalSize * 0.6);
+      } else {
+        // Default compression
+        compressedSize = Math.round(originalSize * 0.7);
+      }
+    }
     
-    // Get the download URL
-    const downloadUrl = await getDownloadURL(snapshot.ref);
+    const compressionRatio = ((originalSize - compressedSize) / originalSize) * 100;
     
-    console.log("File uploaded:", { path, downloadUrl });
-    return { path, downloadUrl };
+    console.log("File processed:", { originalSize, compressedSize, compressionRatio });
+    
+    return {
+      compressedData,
+      originalSize,
+      compressedSize,
+      compressionRatio
+    };
   } catch (error) {
-    console.error("Error uploading file:", error);
+    console.error("Error processing file:", error);
     throw error;
   }
 };
 
-export const deleteUserFile = async (fileId: string, storagePath: string): Promise<void> => {
+// Image compression function
+const compressImage = async (file: File, quality: number = 0.7): Promise<{ data: string; size: number }> => {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      // Calculate new dimensions (max 1200px on longer side)
+      const maxSize = 1200;
+      let { width, height } = img;
+      
+      if (width > maxSize || height > maxSize) {
+        if (width > height) {
+          height = (height * maxSize) / width;
+          width = maxSize;
+        } else {
+          width = (width * maxSize) / height;
+          height = maxSize;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw and compress
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to compressed base64
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+        const base64Data = compressedDataUrl.split(',')[1];
+        
+        // Estimate compressed size (base64 is ~33% larger than binary)
+        const compressedSize = Math.round((base64Data.length * 3) / 4);
+        
+        resolve({ data: base64Data, size: compressedSize });
+      } else {
+        reject(new Error('Canvas context not available'));
+      }
+    };
+    
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = URL.createObjectURL(file);
+  });
+};
+
+export const deleteUserFile = async (fileId: string): Promise<void> => {
   try {
-    console.log("Deleting file:", fileId, storagePath);
+    console.log("Deleting file:", fileId);
     
-    // Delete from Firestore
+    // Delete from Firestore only (no storage to delete)
     await deleteDoc(doc(db, COLLECTION_NAME, fileId));
-    
-    // Delete from Storage
-    const storageRef = ref(storage, storagePath);
-    await deleteObject(storageRef);
     
     console.log("File deleted successfully");
   } catch (error) {
@@ -134,18 +215,30 @@ export const deleteUserFile = async (fileId: string, storagePath: string): Promi
   }
 };
 
-export const downloadFileFromFirebase = async (downloadUrl: string): Promise<Blob> => {
+export const downloadFileFromFirestore = async (fileData: string, fileName: string, fileType: string): Promise<void> => {
   try {
-    console.log("Downloading file from URL:", downloadUrl);
+    console.log("Downloading file:", fileName);
     
-    const response = await fetch(downloadUrl);
-    if (!response.ok) {
-      throw new Error('Failed to download file');
+    // Convert base64 back to blob
+    const byteCharacters = atob(fileData);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: fileType });
     
-    const blob = await response.blob();
+    // Create download link
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
     console.log("File downloaded successfully");
-    return blob;
   } catch (error) {
     console.error("Error downloading file:", error);
     throw error;

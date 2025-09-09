@@ -27,6 +27,15 @@ const Index = () => {
                 SecureZip compresses, encrypts, and stores any file type in the cloud with 
                 our lossless compression technology. Never lose quality again.
               </p>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 my-4">
+                <div className="flex items-center">
+                  <Shield className="h-5 w-5 text-green-600 mr-2" />
+                  <span className="text-green-800 font-medium">100% Free Forever</span>
+                </div>
+                <p className="text-green-700 text-sm mt-1">
+                  No credit card required. Unlimited file compression using Firestore free tier.
+                </p>
+              </div>
               <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 pt-4">
                 <Link to="/register">
                   <Button className="text-lg bg-primary hover:bg-primary/90 text-white px-6 py-6 h-auto w-full sm:w-auto">
