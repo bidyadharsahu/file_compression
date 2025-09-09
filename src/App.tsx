@@ -13,6 +13,7 @@ import Features from "./pages/Features";
 import About from "./pages/About";
 import Account from "./pages/Account";
 import AuthProvider from "./contexts/AuthContext";
+import ProtectedRoute from "./routes/ProtectedRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
